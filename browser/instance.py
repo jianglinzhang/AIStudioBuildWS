@@ -1,7 +1,7 @@
 import os
 import signal
 import time
-from playwright.sync_api import TimeoutError, Error as PlaywrightError
+from playwright.sync_api import TimeoutError, Error as PlaywrightError, expect
 from utils.logger import setup_logging
 from utils.cookie_manager import CookieManager
 from browser.navigation import handle_successful_navigation, KeepAliveError
@@ -181,7 +181,10 @@ def run_browser_instance(config, shutdown_event=None):
                     try:
                         logger.info("正在等待加载指示器 (spinner) 消失... (最长等待30秒)")
                         # 我们等待spinner变为'隐藏'状态或从DOM中消失。
-                        spinner_locator.wait_for(state='hidden', timeout=30000)
+                        # spinner_locator.wait_for(state='hidden', timeout=30000)
+                        # 使用 expect 断言，它会自动重试直到满足条件或超时
+                        # :visible 伪类很重要，因为它只计算用户可见的 spinner，忽略那些隐藏但在 DOM 中的
+                        expect(page.locator('mat-spinner:visible')).to_have_count(0, timeout=30000)
                         logger.info("加载指示器已消失。页面已完成异步加载")
                     except TimeoutError:
                         logger.error("页面加载指示器在30秒内未消失。页面可能已卡住")
